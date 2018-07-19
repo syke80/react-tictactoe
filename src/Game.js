@@ -1,55 +1,76 @@
 import React from 'react';
 import Board from './Board';
+import BoardHistory from './BoardHistory';
 
 export default class Game extends React.Component {
-  boardHistory = [];
-  
   constructor(props) {
     super(props);
     this.state = {
-      squares: Array(9).fill(null),
-      isXNext: true
+      boardHistory: [
+        {
+          squares: Array(9).fill(null)
+        }
+      ],
+      currentStep: 0
     };
   }
 
+  isXNext() {
+    return (this.state.currentStep % 2) !== 1
+  }
+  
+  currentSquares() {
+    return this.state.boardHistory[this.state.currentStep].squares;
+  }
+  
   onSquareClick(index) {
-    if (calculateWinner(this.state.squares) || this.state.squares[index] !== null) {
+    if (calculateWinner(this.currentSquares()) || this.currentSquares()[index] !== null) {
       return;
     }
 
-    const squares = this.state.squares.slice();
-    squares[index] = this.state.isXNext ? 'X' : 'O';
+    const squares = this.currentSquares().slice();
+    squares[index] = this.isXNext() ? 'X' : 'O';
 
-    this.boardHistory.push(squares);
+    this.state.boardHistory.push({
+      squares: squares
+    });
     
     this.setState({
-      squares: squares,
-      isXNext: !this.state.isXNext
+      boardHistory: this.state.boardHistory,
+      currentStep: this.state.currentStep + 1
     });
   }
 
+  onStepClick(index) {
+    this.setState({ currentStep: index });
+  }
+  
   render() {
-    const winner = calculateWinner(this.state.squares);
+    const winner = calculateWinner(this.currentSquares());
     let status;
 
     if (winner) {
       status = 'Winner: ' + winner;
     }
     else {
-      status = 'Next player: ' + (this.state.isXNext ? 'X' : 'O');
+      status = 'Next player: ' + (this.isXNext() ? 'X' : 'O');
     }
 
     return (
       <div className="game">
         <div className="game-board">
           <Board
-            squares={this.state.squares}
+            squares={this.currentSquares()}
             onClick={ index => this.onSquareClick(index) }
           />
         </div>
         <div className="game-info">
           <div className="status">{status}</div>
-          <ol>{/* TODO */}</ol>
+          <BoardHistory
+            boardHistory={this.state.boardHistory}
+            onClick={index => this.onStepClick(index)}
+            currentStep={this.state.currentStep}
+          />
         </div>
       </div>
       
